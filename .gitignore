@@ -1,0 +1,107 @@
+# =========================
+# Binários / Build
+# =========================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Diretórios de build comuns
+bin/
+build/
+dist/
+
+# =========================
+# Go workspace
+# =========================
+go.work
+go.work.sum
+
+# =========================
+# Dependências (geralmente NÃO ignorar go.mod/sum)
+# =========================
+# NÃO ignore esses:
+# go.mod
+# go.sum
+
+# =========================
+# Arquivos de cobertura
+# =========================
+coverage.out
+*.coverprofile
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+tmp/
+
+# =========================
+# Arquivos do sistema
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDEs / Editores
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Variáveis de ambiente
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Testes / mocks gerados
+# =========================
+mock_*.go
+*.mock.go
+
+# =========================
+# Arquivos temporários
+# =========================
+*.tmp
+*.temp
+
+# =========================
+# Cache do Go
+# =========================
+# (geralmente não vai pro repo, mas por garantia)
+pkg/
+
+# =========================
+# Ferramentas específicas
+# =========================
+# Delve debugger
+debug
+
+# Air (live reload)
+.air/
+
+# =========================
+# Banco local (caso use)
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Dados pessoais e IA
+# =========================
+
+*.pdf
