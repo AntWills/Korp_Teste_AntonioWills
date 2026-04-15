@@ -12,7 +12,7 @@ func SetupRoutes(router *gin.Engine, invoiceCtrl *controllers.InvoiceController)
 	api := router.Group("/api/invoices")
 	{
 		api.GET("/health", func(c *gin.Context) {
-			c.String(http.StatusOK, "Billing Service is healthy")
+			c.String(http.StatusOK, "Invoices Service is healthy")
 		})
 
 		api.POST("", invoiceCtrl.CreateInvoice)
