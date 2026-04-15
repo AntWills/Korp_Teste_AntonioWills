@@ -1,0 +1,119 @@
+services:
+  inventory-db:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_password
+      POSTGRES_DB: inventory
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      - "5432:5432"
+    volumes:
+      - inventory_data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+
+  billing-db:
+    image: postgres:16-alpine
+    container_name: billing-db
+    environment:
+      POSTGRES_USER: billing_user
+      POSTGRES_PASSWORD: billing_password
+      POSTGRES_DB: billing
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      - "5433:5432"
+    volumes:
+      - billing_data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+
+  inventory-service:
+    build:
+      context: ./inventory_service
+    container_name: inventory-service
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=inventory-db
+      - DB_PORT=5432
+      - DB_USER=inventory_user
+      - DB_PASSWORD=inventory_password
+      - DB_NAME=inventory
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/inventory/health"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  billing-service:
+    build:
+      context: ./billing_service
+    container_name: billing-service
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=billing-db
+      - DB_PORT=5432
+      - DB_USER=billing_user
+      - DB_PASSWORD=billing_password
+      - DB_NAME=billing
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/api/billing/health"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+    depends_on:
+      billing-db:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: api-gateway
+    ports:
+      - "80:8080"
+    depends_on:
+      inventory-service:
+        condition: service_healthy
+      billing-service:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-placeholder
+    # ports:
+    #   - "4200:4200"
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  inventory_data:
+  billing_data:
