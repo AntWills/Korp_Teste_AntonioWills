@@ -19,13 +19,13 @@ services:
     networks:
       - microservices-net
 
-  billing-db:
+  invoice-db:
     image: postgres:16-alpine
-    container_name: billing-db
+    container_name: invoice-db
     environment:
-      POSTGRES_USER: billing_user
-      POSTGRES_PASSWORD: billing_password
-      POSTGRES_DB: billing
+      POSTGRES_USER: invoice_user
+      POSTGRES_PASSWORD: invoice_password
+      POSTGRES_DB: invoice
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -35,7 +35,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - billing_data:/var/lib/postgresql/data
+      - invoice_data:/var/lib/postgresql/data
     networks:
       - microservices-net
 
@@ -63,26 +63,26 @@ services:
     networks:
       - microservices-net
 
-  billing-service:
+  invoice-service:
     build:
-      context: ./billing_service
-    container_name: billing-service
+      context: ./invoice_service
+    container_name: invoice-service
     ports:
       - "8081:8081"
     environment:
-      - DB_HOST=billing-db
+      - DB_HOST=invoice-db
       - DB_PORT=5432
-      - DB_USER=billing_user
-      - DB_PASSWORD=billing_password
-      - DB_NAME=billing
+      - DB_USER=invoice_user
+      - DB_PASSWORD=invoice_password
+      - DB_NAME=invoice
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8081/api/billing/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/api/invoices/health"]
       interval: 10s
       retries: 5
       start_period: 10s
       timeout: 5s
     depends_on:
-      billing-db:
+      invoice-db:
         condition: service_healthy
     networks:
       - microservices-net
@@ -96,7 +96,7 @@ services:
     depends_on:
       inventory-service:
         condition: service_healthy
-      billing-service:
+      invoice-service:
         condition: service_healthy
     networks:
       - microservices-net
@@ -116,4 +116,4 @@ networks:
 
 volumes:
   inventory_data:
-  billing_data:
+  invoice_data:

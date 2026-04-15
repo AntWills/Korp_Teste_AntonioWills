@@ -30,7 +30,7 @@ func main() {
 	router := gin.Default()
 	routes.SetupRoutes(router, invoiceCtrl)
 
-	log.Println("Starting Billing Service on port 8081")
+	log.Println("Starting Invoice Service on port 8081")
 	if err := router.Run(":8081"); err != nil {
 		log.Fatal(err)
 	}
