@@ -36,3 +36,20 @@ func (r *ProductRepository) Update(product *Product) error {
 func (r *ProductRepository) DeleteByCode(code string) error {
 	return r.db.Where("code = ?", code).Delete(&Product{}).Error
 }
+
+func (r *ProductRepository) DB() *gorm.DB {
+	return r.db
+}
+
+func (r *ProductRepository) DeductStock(code string, quantity int, tx *gorm.DB) error {
+	result := tx.Model(&Product{}).
+		Where("code = ? AND balance >= ?", code, quantity).
+		UpdateColumn("balance", gorm.Expr("balance - ?", quantity))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}

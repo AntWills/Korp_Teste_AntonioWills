@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"inventory_service/persistence"
+	"gorm.io/gorm"
 )
 
 type ProductService struct {
@@ -18,7 +19,6 @@ func (s *ProductService) CreateProduct(code, description string, balance int) (*
 		return nil, errors.New("code and description are required")
 	}
 	
-	// Check if already exists
 	_, err := s.repo.FindByCode(code)
 	if err == nil {
 		return nil, errors.New("product with this code already exists")
@@ -57,4 +57,21 @@ func (s *ProductService) UpdateProductBalance(code string, balance int) (*persis
 	}
 	
 	return product, nil
+}
+
+type DeductItem struct {
+	Code     string `json:"code" binding:"required"`
+	Quantity int    `json:"quantity" binding:"required,gt=0"`
+}
+
+func (s *ProductService) DeductProducts(items []DeductItem) error {
+	return s.repo.DB().Transaction(func(tx *gorm.DB) error {
+		for _, item := range items {
+			err := s.repo.DeductStock(item.Code, item.Quantity, tx)
+			if err != nil {
+				return errors.New("Estoque insuficiente ou código de produto inválido: " + item.Code)
+			}
+		}
+		return nil
+	})
 }

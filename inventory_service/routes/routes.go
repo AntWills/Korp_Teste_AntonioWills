@@ -3,24 +3,21 @@ package routes
 import (
 	"inventory_service/controllers"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(mux *http.ServeMux, productController *controllers.ProductController) {
-	// Health Check
-	mux.HandleFunc("/api/inventory/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Inventory Service is healthy"))
-	})
+func RegisterRoutes(router *gin.Engine, productController *controllers.ProductController) {
+	api := router.Group("/api/inventory")
+	{
+		api.GET("/health", func(c *gin.Context) {
+			c.String(http.StatusOK, "Inventory Service is healthy")
+		})
 
-	// Products
-	mux.HandleFunc("/api/inventory/products", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			productController.GetAllProducts(w, r)
-		case http.MethodPost:
-			productController.CreateProduct(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
+		api.POST("/products", productController.CreateProduct)
+		api.GET("/products", productController.GetAllProducts)
+		
+		// Concurrency-safe endpoint specific for billing checkout process
+		api.POST("/deduct", productController.DeductProducts)
+	}
 }

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 
 	"inventory_service/controllers"
 	"inventory_service/infra/database"
 	"inventory_service/persistence"
 	"inventory_service/routes"
 	"inventory_service/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -27,12 +27,12 @@ func main() {
 	service := services.NewProductService(repo)
 	controller := controllers.NewProductController(service)
 
-	// Setup routes
-	mux := http.NewServeMux()
-	routes.RegisterRoutes(mux, controller)
+	// Setup Gin router
+	router := gin.Default()
+	routes.RegisterRoutes(router, controller)
 
-	fmt.Println("Starting Inventory Service on port 8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	log.Println("Starting Inventory Service on port 8080")
+	if err := router.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
 }

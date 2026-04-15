@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"encoding/json"
 	"inventory_service/services"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ProductController struct {
@@ -15,36 +16,52 @@ func NewProductController(service *services.ProductService) *ProductController {
 }
 
 type CreateProductRequest struct {
-	Code        string `json:"code"`
-	Description string `json:"description"`
-	Balance     int    `json:"balance"`
+	Code        string `json:"code" binding:"required"`
+	Description string `json:"description" binding:"required"`
+	Balance     int    `json:"balance" binding:"required,gte=0"`
 }
 
-func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) CreateProduct(ctx *gin.Context) {
 	var req CreateProductRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	product, err := c.service.CreateProduct(req.Code, req.Description, req.Balance)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(product)
+	ctx.JSON(http.StatusCreated, product)
 }
 
-func (c *ProductController) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+func (c *ProductController) GetAllProducts(ctx *gin.Context) {
 	products, err := c.service.GetAllProducts()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	ctx.JSON(http.StatusOK, products)
+}
+
+type DeductRequest struct {
+	Items []services.DeductItem `json:"items" binding:"required,dive"`
+}
+
+func (c *ProductController) DeductProducts(ctx *gin.Context) {
+	var req DeductRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := c.service.DeductProducts(req.Items)
+	if err != nil {
+		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "Estoque deduzido com sucesso"})
 }
